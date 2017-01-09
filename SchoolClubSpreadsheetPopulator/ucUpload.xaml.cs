@@ -16,6 +16,7 @@ namespace SchoolClubSpreadsheetPopulator
 {
     /// <summary>
     /// Interaction logic for ucUpload.xaml
+    /// User control used to get the user to upload the master template file which is validated against the mappings file.
     /// </summary>
     public partial class ucUpload : UserControl
     {
