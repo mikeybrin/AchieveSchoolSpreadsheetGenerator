@@ -7,6 +7,7 @@ namespace SchoolClubSpreadsheetPopulator
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
+    /// Main window containing the layout and housing all of the relevent user controls.
     /// </summary>
     public partial class MainWindow : Window
     {
