@@ -14,6 +14,7 @@ namespace SchoolClubSpreadsheetPopulator
 {
     /// <summary>
     /// Interaction logic for ucGenerateSpreadsheets.xaml
+    /// User control that from a list of Schools and Students creates the necessary Excel Spreadsheets.
     /// </summary>
     public partial class ucGenerateSpreadsheets : UserControl
     {
