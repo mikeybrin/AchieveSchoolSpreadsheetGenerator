@@ -5,8 +5,32 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SchoolClubSpreadsheetPopulator"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
-    <Grid>
-        
+        ResizeMode="CanResize"
+        Height="620" Width="725" 
+        FontFamily="Helvetica" 
+        FontSize="18" 
+        Foreground="#FFCC0033" 
+        FontWeight="Bold" 
+        Background="#ffffff"
+        AllowsTransparency="False"
+        WindowStartupLocation="CenterScreen"
+        >
+    <Grid x:Name="gIntro">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="150"/>
+            <RowDefinition Height="350"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="70"/>
+        </Grid.RowDefinitions>
+        <Image Grid.Row="0" Grid.Column="0" x:Name="imgLogo" Source="Images/photo.jpg" OpacityMask="{x:Null}" HorizontalAlignment="Stretch"/>
+        <ContentControl x:Name="ccWelcome" Grid.Row="1" Grid.Column="0" Visibility="Visible" Margin="40"></ContentControl>
+        <ContentControl x:Name="ccUpload" Grid.Row="1" Grid.Column="0" Visibility="Hidden" Margin="40"></ContentControl>
+        <ContentControl x:Name="ccGenerate" Grid.Row="1" Grid.Column="0" Visibility="Hidden" Margin="40"></ContentControl>
+        <Button FontSize="12" Visibility="Hidden" Click="btnStartAgain_Click" x:Name="btnStartOver" Grid.Row="2" Content="Cancel" VerticalAlignment="Center" Padding="5" Width="250" Background="LightGray" Foreground="Black">
+            <Button.Effect>
+                <DropShadowEffect Opacity="0.25"/>
+            </Button.Effect>
+        </Button>
+        <Label Grid.Row="3" Grid.Column="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" FontFamily="Centaur" Height="38" Background="#FF303030" Foreground="White" Content="© 2016 The Prince's Trust - registered charity: England and Wales 1079675 and Scotland SC041198"/>
     </Grid>
 </Window>

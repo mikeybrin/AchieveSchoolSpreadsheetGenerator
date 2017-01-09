@@ -1,17 +1,7 @@
-﻿using System;
+﻿using SchoolClubSpreadsheetPopulator.Classes;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace SchoolClubSpreadsheetPopulator
 {
@@ -23,6 +13,58 @@ namespace SchoolClubSpreadsheetPopulator
         public MainWindow()
         {
             InitializeComponent();
+
+            SetDefaultState();
+        }
+
+        private void btnStart_Click(object sender, EventArgs e)
+        {
+            ccWelcome.Visibility = Visibility.Hidden;
+            btnStartOver.Visibility = Visibility.Visible;
+
+            CreateUploadControl();
+        }
+
+        private void btnStartAgain_Click(object sender, RoutedEventArgs e)
+        {
+            SetDefaultState();
+        }
+
+        private void SetDefaultState()
+        {
+            var ucWelcome = new ucWelcome();
+            ucWelcome.btnStartClickEventHandler += new EventHandler(btnStart_Click);
+            ccWelcome.Content = ucWelcome;
+            ccWelcome.Visibility = Visibility.Visible;
+
+            ccUpload.Visibility = Visibility.Hidden;
+            ccGenerate.Visibility = Visibility.Hidden;
+            btnStartOver.Visibility = Visibility.Hidden;
+        }
+
+        private void CreateUploadControl()
+        {
+            var ucUpload = new ucUpload();
+            ucUpload.btnGenerateSpreadsheetClickEventHandler += UcUpload_btnGenerateSpreadsheetClickEventHandler;
+            ccUpload.Content = ucUpload;
+
+            ccUpload.Visibility = Visibility.Visible;
+        }
+
+        private void UcUpload_btnGenerateSpreadsheetClickEventHandler(Dictionary<string, Country> SchoolAndStudentData, int spreadsheetsToGenerate)
+        {
+            ccUpload.Visibility = Visibility.Hidden;
+            btnStartOver.Visibility = Visibility.Visible;
+
+            var ucGenerateSpreadsheets = new ucGenerateSpreadsheets();
+            ucGenerateSpreadsheets.SchoolAndStudentData = SchoolAndStudentData;
+            ucGenerateSpreadsheets.ExpectedSpreadsheetsToGenerate = spreadsheetsToGenerate;
+            ucGenerateSpreadsheets.GenerateData();
+
+            ccGenerate.Content = ucGenerateSpreadsheets;
+            ccGenerate.Visibility = Visibility.Visible;
+
+            ccUpload.Visibility = Visibility.Hidden;
         }
     }
 }
