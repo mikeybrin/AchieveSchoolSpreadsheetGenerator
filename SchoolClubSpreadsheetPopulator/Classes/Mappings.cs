@@ -48,6 +48,8 @@ namespace SchoolClubSpreadsheetPopulator.Classes
 
         private string yearGroupColumnIdField;
 
+        private string endMonthColumnIdField;
+
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("spreadsheet", IsNullable = false)]
         public mappingsTemplatemasterSpreadsheet[] spreadsheets
@@ -87,6 +89,19 @@ namespace SchoolClubSpreadsheetPopulator.Classes
             set
             {
                 this.countryColumnIdField = value;
+            }
+        }
+
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string endMonthColumnId
+        {
+            get
+            {
+                return this.endMonthColumnIdField;
+            }
+            set
+            {
+                this.endMonthColumnIdField = value;
             }
         }
 

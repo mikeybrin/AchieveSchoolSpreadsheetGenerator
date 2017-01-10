@@ -1,6 +1,7 @@
 ﻿using SchoolClubSpreadsheetPopulator.Classes;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -23,12 +24,11 @@ namespace SchoolClubSpreadsheetPopulator
         public delegate void GenerateSpreadsheetDelegate(Dictionary<string, Country> SchoolAndStudentData, int totalSpreadsheetsToGenerate);
         internal event GenerateSpreadsheetDelegate btnGenerateSpreadsheetClickEventHandler;
 
-        private int _countriesLocated = 0;
-        private int _schoolsLocated = 0;
         private int _studentsLocated = 0;
         private int _spreadsheetsToGenerate;
         private List<string> _errors = new List<string>();
         private List<string> _mappingErrors = new List<string>();
+        private string[] _months;
 
         private const string FileUploadFilter = "Excel 2010|*.xlsx|Excel|*.xls|Text documents (.txt)|*.txt|CSV files (*.csv)|*.csv";
 
@@ -37,11 +37,19 @@ namespace SchoolClubSpreadsheetPopulator
         public ucUpload()
         {
             InitializeComponent();
+
+            _months = CultureInfo.CurrentCulture.DateTimeFormat.MonthNames;
+            for (var i = 0; i < _months.Length-1; i++)
+            {
+                lbMonths.Items.Add(_months[i]);
+            }
+
+            lbMonths.SelectedValue = DateTime.Now.AddMonths(-1).ToString("MMMM");
         }
 
         private void btnBrowse_Click(object sender, RoutedEventArgs e)
         {
-            btnValidate.Visibility = Visibility.Hidden;
+            spValidate.Visibility = Visibility.Hidden;
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
 
             // Set filter for file extension and default file extension
@@ -57,32 +65,31 @@ namespace SchoolClubSpreadsheetPopulator
                 string filename = dlg.FileName;
                 txtFileName.Text = filename;
 
-                btnValidate.Visibility = Visibility.Visible;
+                spValidate.Visibility = Visibility.Visible;
             }
         }
 
         private void btnValidate_Click(object sender, RoutedEventArgs e)
         {
             _schoolAndStudentData = new Dictionary<string, Country>();
-            _countriesLocated = 0;
-            _schoolsLocated = 0;
             _studentsLocated = 0;
             _errors = new List<string>();
 
             if (!string.IsNullOrEmpty(txtFileName.Text))
             {
                 var filePath = txtFileName.Text;
+                var endMonth = lbMonths.SelectedValue.ToString();
 
                 progressIndicator.IsBusy = true;
 
                 // exspensive process reading excel files (much better if they wee CSV!) so lets start a background task to read it.
                 Task.Factory.StartNew(() =>
                 {
-                    ReadFileContents(filePath);
+                    ReadFileContents(filePath, endMonth);
 
                     if (!_schoolAndStudentData.Any() && !_mappingErrors.Any())
                     {
-                        _errors.Add("The file has no data!");
+                        _errors.Add("The file has no data for the selected month!");
                     }
                 })
                 .ContinueWith((task) =>
@@ -90,13 +97,29 @@ namespace SchoolClubSpreadsheetPopulator
                     // file has been read let's show the results
                     progressIndicator.IsBusy = false;
                     spUpload.Visibility = Visibility.Collapsed;
-                    btnValidate.Visibility = Visibility.Collapsed;
+                    spValidate.Visibility = Visibility.Collapsed;
                     spResult.Visibility = Visibility.Visible;
                     lblValidationResult.Visibility = Visibility.Visible;
 
+                    btnProceed.Visibility = _studentsLocated > 0 ? Visibility.Visible : Visibility.Collapsed;
+
                     if (!_mappingErrors.Any())
                     {
-                        lblValidationResult.Text = $"Countries located = {_countriesLocated}, Schools located = {_schoolsLocated}, Students located = {_studentsLocated}{Environment.NewLine}Total spreadsheets to generate: {_spreadsheetsToGenerate}";
+                        var countries = _schoolAndStudentData.Values.Where(x => x.Schools.Any(y => y.Value.Spreadsheets.Any(z => z.Value.Students.Any())));
+                        var schools = 0;
+
+                        foreach (var country in countries)
+                        {
+                            foreach (var school in country.Schools)
+                            {
+                                if (school.Value.Spreadsheets.Any())
+                                {
+                                    schools++;
+                                }
+                            }
+                        }
+
+                        lblValidationResult.Text = $"Countries located = {countries.Count()}, Schools located = {schools}, Students located = {_studentsLocated}{Environment.NewLine}Total spreadsheets to generate: {_spreadsheetsToGenerate}";
                     }
                     else
                     {
@@ -122,7 +145,7 @@ namespace SchoolClubSpreadsheetPopulator
                             lbErrors.Items.Add(new ListBoxItem { Content = error });
                         }
 
-                        
+
                     }
 
                 }, TaskScheduler.FromCurrentSynchronizationContext());
@@ -133,7 +156,7 @@ namespace SchoolClubSpreadsheetPopulator
             }
         }
 
-        private void ReadFileContents(string filePath)
+        private void ReadFileContents(string filePath, string endMonth)
         {
             Dispatcher.Invoke(() =>
             {
@@ -177,102 +200,125 @@ namespace SchoolClubSpreadsheetPopulator
                 {
                     var columnData = new string[colCount];
 
-                    var countryName = GetColumnValue(xlRange, i, Utility.ExcelColumnNameToNumber(mappings.templatemaster.countryColumnId));
+                    var month = GetColumnValue(xlRange, i, Utility.ExcelColumnNameToNumber(mappings.templatemaster.endMonthColumnId));
 
-                    Country country = null;
-
-                    if (!string.IsNullOrEmpty(countryName))
+                    if (month == endMonth)
                     {
-                        if (_schoolAndStudentData.ContainsKey(countryName))
-                        {
-                            country = _schoolAndStudentData[countryName];
-                        }
-                        else
-                        {
-                            country = new Country { Name = countryName, Schools = new Dictionary<string, School>() };
-                            _schoolAndStudentData.Add(countryName, country);
-                            _countriesLocated++;
-                        }
-                    }
-                    else
-                    {
-                        _errors.Add($"Invalid or blank country name at row {i} column {mappings.templatemaster.countryColumnId}");
-                    }
+                        var countryName = GetColumnValue(xlRange, i, Utility.ExcelColumnNameToNumber(mappings.templatemaster.countryColumnId));
 
-                    if (country != null)
-                    {
-                        var schoolName = GetColumnValue(xlRange, i, Utility.ExcelColumnNameToNumber(mappings.templatemaster.schoolColumnId));
+                        Country country = null;
 
-                        School school = null;
-
-                        if (!string.IsNullOrEmpty(schoolName))
+                        if (!string.IsNullOrEmpty(countryName))
                         {
-                            if (country.Schools.ContainsKey(schoolName))
+                            if (_schoolAndStudentData.ContainsKey(countryName))
                             {
-                                school = country.Schools[schoolName];
+                                country = _schoolAndStudentData[countryName];
                             }
                             else
                             {
-                                school = new School { Name = schoolName, Spreadsheets = new Dictionary<string, SpreadsheetData>() };
-                                country.Schools.Add(schoolName, school);
-                                _schoolsLocated++;
+                                country = new Country { Name = countryName, Schools = new Dictionary<string, School>() };
+                                _schoolAndStudentData.Add(countryName, country);
                             }
                         }
                         else
                         {
-                            _errors.Add($"Invalid or blank school name at row {i} column {mappings.templatemaster.schoolColumnId}");
+                            _errors.Add($"Invalid or blank country name at row {i} column {mappings.templatemaster.countryColumnId}");
                         }
 
-                        if (school != null)
+                        if (country != null)
                         {
-                            if (mappings.templatemaster.spreadsheets.Any(x => x.countries.Any(y => y.name == countryName)))
+                            var schoolName = GetColumnValue(xlRange, i, Utility.ExcelColumnNameToNumber(mappings.templatemaster.schoolColumnId));
+
+                            School school = null;
+
+                            if (!string.IsNullOrEmpty(schoolName))
                             {
-                                foreach (var spreadsheet in mappings.templatemaster.spreadsheets.Where(x => x.countries.Any(y => y.name == countryName)))
+                                if (country.Schools.ContainsKey(schoolName))
                                 {
-                                    if (spreadsheet.countries.Any(x => x.name == country.Name))
-                                    {
-                                        var yearGroup = GetColumnValue(xlRange, i, Utility.ExcelColumnNameToNumber(mappings.templatemaster.yearGroupColumnId));
-
-                                        if (spreadsheet.yeargroups.Any(x => x.name == yearGroup))
-                                        {
-                                            _studentsLocated++;
-
-                                            Dispatcher.Invoke(() =>
-                                            {
-                                                progressIndicator.BusyContent = $"Countries located = {_countriesLocated}, Schools located = {_schoolsLocated}, Students located = {_studentsLocated}";
-                                            });
-
-                                            SpreadsheetData spreadSheetData = null;
-
-                                            if (school.Spreadsheets.ContainsKey(spreadsheet.templatename))
-                                            {
-                                                spreadSheetData = school.Spreadsheets[spreadsheet.templatename];
-                                            }
-                                            else
-                                            {
-                                                _spreadsheetsToGenerate++;
-                                                spreadSheetData = new SpreadsheetData { Name = spreadsheet.templatename, YearGroup = yearGroup, Students = new List<Student>(), TargetRowId = spreadsheet.targetFirstRowId };
-                                                school.Spreadsheets.Add(spreadsheet.templatename, spreadSheetData);
-                                            }
-
-                                            var student = new Student { Values = new List<mappingsTemplatemasterSpreadsheetMapping>() };
-
-                                            foreach (var column in spreadsheet.columnMappings)
-                                            {
-                                                var studentValue = GetColumnValue(xlRange, i, Utility.ExcelColumnNameToNumber(column.sourceColumnId));
-
-                                                student.Values.Add(new mappingsTemplatemasterSpreadsheetMapping { targetColumnId = column.targetColumnId, value = studentValue });
-                                            }
-
-                                            spreadSheetData.Students.Add(student);
-                                        }
-                                    }
+                                    school = country.Schools[schoolName];
+                                }
+                                else
+                                {
+                                    school = new School { Name = schoolName, Spreadsheets = new Dictionary<string, SpreadsheetData>() };
+                                    country.Schools.Add(schoolName, school);
                                 }
                             }
                             else
                             {
-                                _errors.Add($"There is no mapping for this country: {countryName} in the mapping file at row {i} column {mappings.templatemaster.countryColumnId}");
+                                _errors.Add($"Invalid or blank school name at row {i} column {mappings.templatemaster.schoolColumnId}");
                             }
+
+                            if (school != null)
+                            {
+                                if (mappings.templatemaster.spreadsheets.Any(x => x.countries.Any(y => y.name == countryName)))
+                                {
+                                    foreach (var spreadsheet in mappings.templatemaster.spreadsheets.Where(x => x.countries.Any(y => y.name == countryName)))
+                                    {
+                                        if (spreadsheet.countries.Any(x => x.name == country.Name))
+                                        {
+                                            var yearGroup = GetColumnValue(xlRange, i, Utility.ExcelColumnNameToNumber(mappings.templatemaster.yearGroupColumnId));
+
+                                            if (spreadsheet.yeargroups.Any(x => x.name == yearGroup))
+                                            {
+                                                _studentsLocated++;
+
+                                                var countries = _schoolAndStudentData.Values.Where(x => x.Schools.Any(y => y.Value.Spreadsheets.Any(z => z.Value.Students.Any())));
+
+                                                var schools = 0;
+
+                                                foreach (var countryItem in countries)
+                                                {
+                                                    foreach (var schoolItem in country.Schools)
+                                                    {
+                                                        if (schoolItem.Value.Spreadsheets.Any())
+                                                        {
+                                                            schools++;
+                                                        }
+                                                    }
+                                                }
+
+                                                Dispatcher.Invoke(() =>
+                                                {
+                                                    progressIndicator.BusyContent = $"Countries located = {countries.Count()}, Schools located = {schools}, Students located = {_studentsLocated}";
+                                                });
+
+                                                SpreadsheetData spreadSheetData = null;
+
+                                                if (school.Spreadsheets.ContainsKey(spreadsheet.templatename))
+                                                {
+                                                    spreadSheetData = school.Spreadsheets[spreadsheet.templatename];
+                                                }
+                                                else
+                                                {
+                                                    _spreadsheetsToGenerate++;
+                                                    spreadSheetData = new SpreadsheetData { Name = spreadsheet.templatename, YearGroup = yearGroup, Students = new List<Student>(), TargetRowId = spreadsheet.targetFirstRowId };
+                                                    school.Spreadsheets.Add(spreadsheet.templatename, spreadSheetData);
+                                                }
+
+                                                var student = new Student { Values = new List<mappingsTemplatemasterSpreadsheetMapping>() };
+
+                                                foreach (var column in spreadsheet.columnMappings)
+                                                {
+                                                    var studentValue = GetColumnValue(xlRange, i, Utility.ExcelColumnNameToNumber(column.sourceColumnId));
+
+                                                    student.Values.Add(new mappingsTemplatemasterSpreadsheetMapping { targetColumnId = column.targetColumnId, value = studentValue });
+                                                }
+
+                                                spreadSheetData.Students.Add(student);
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    _errors.Add($"There is no mapping for this country: {countryName} in the mapping file at row {i} column {mappings.templatemaster.countryColumnId}");
+                                }
+                            }
+                        }
+
+                        else if (!_months.Contains(month))
+                        {
+                            _errors.Add($"Invalid end month at row: {i} column: {mappings.templatemaster.endMonthColumnId}");
                         }
                     }
                 }

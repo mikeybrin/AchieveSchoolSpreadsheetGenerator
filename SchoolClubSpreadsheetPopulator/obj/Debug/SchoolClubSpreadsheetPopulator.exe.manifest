@@ -42,14 +42,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="SchoolClubSpreadsheetPopulator.exe" size="169360">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="SchoolClubSpreadsheetPopulator.exe" size="171920">
       <assemblyIdentity name="SchoolClubSpreadsheetPopulator" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>xpXN9Ojn8D9aH9qng+H45k+ZA72c9xt2QnWVJIbO3mE=</dsig:DigestValue>
+        <dsig:DigestValue>YefU1idehBJsd8Q7pkMVniea3wSUetbKwbb0/B9VtLs=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -245,13 +245,13 @@
       </hash>
     </dependentAssembly>
   </dependency>
-  <file name="SchoolClubSpreadsheetPopulator.exe.config" size="582">
+  <file name="SchoolClubSpreadsheetPopulator.exe.config" size="579">
     <hash>
       <dsig:Transforms>
         <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
       </dsig:Transforms>
       <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-      <dsig:DigestValue>XU7qnN5ltAXufmNxt+kJgib4c1A/lCN0ue+lFXbzMoE=</dsig:DigestValue>
+      <dsig:DigestValue>WBOZ8qnvgAVS8f8gIGkFj9ZOY29hdt93ddVt0sZMGoY=</dsig:DigestValue>
     </hash>
   </file>
 </asmv1:assembly>

@@ -4,7 +4,7 @@
   <description asmv2:publisher="SchoolClubSpreadsheetPopulator" asmv2:product="SchoolClubSpreadsheetPopulator" xmlns="urn:schemas-microsoft-com:asm.v1" />
   <deployment install="true" mapFileExtensions="true" />
   <compatibleFrameworks xmlns="urn:schemas-microsoft-com:clickonce.v2">
-    <framework targetVersion="4.5.2" profile="Full" supportedRuntime="4.0.30319" />
+    <framework targetVersion="4.5.1" profile="Full" supportedRuntime="4.0.30319" />
   </compatibleFrameworks>
   <dependency>
     <dependentAssembly dependencyType="install" codebase="SchoolClubSpreadsheetPopulator.exe.manifest" size="14922">
@@ -14,7 +14,7 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>u6OPdIHaShPAPWYxI4g3Us+KduZTvOaG7LSFIIpOuv0=</dsig:DigestValue>
+        <dsig:DigestValue>o9aNLgmotG3608uOSkmuZ2T0pd69z8woRQZKWYpNtqQ=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
